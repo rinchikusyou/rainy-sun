@@ -7,8 +7,17 @@ class TagService {
     return tag;
   }
 
-  async getAll() {
-    const tags = await Tag.findAll();
+  async getAll(title, limit) {
+    title = title || "";
+    limit = limit || 2;
+    const tags = await Tag.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${title}%`
+        }
+      },
+      limit
+    });
     return tags
   }
 
@@ -20,6 +29,9 @@ class TagService {
     if (popular && now) {
       articles = await Article.findAndCountAll({
         limit, offset,
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
@@ -36,6 +48,9 @@ class TagService {
     else if (popular && !now) {
       articles = await Article.findAndCountAll({
         limit, offset,
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
@@ -52,6 +67,9 @@ class TagService {
     else if (!popular && now) {
       articles = await Article.findAndCountAll({
         limit, offset,
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
@@ -68,6 +86,9 @@ class TagService {
     else {
       articles = await Article.findAndCountAll({
         limit, offset,
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`

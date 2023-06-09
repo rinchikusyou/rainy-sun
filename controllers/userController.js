@@ -31,11 +31,8 @@ router.post("/registration", async (req, res, next) => {
 
 router.put("/", checkTokenValidation, async (req, res, next) => {
   try {
-    if (!req.body) {
-      return next(ApiError.badRequest("Ошибка запроса"))
-    }
-    const { username, password, delete_img } = req.body;
-    const user = await userService.updateUser(username, req.user.email, password, delete_img, req.files);
+    const { username, delete_img } = req.body;
+    const user = await userService.updateUser(username, req.user.email, delete_img, req.files);
     if (!user) {
       return next(ApiError.badRequest("Ошибка запроса"))
     }
@@ -43,11 +40,46 @@ router.put("/", checkTokenValidation, async (req, res, next) => {
     res.json({ token: jwt })
   }
   catch (e) {
-    console.log(e)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
 
+router.put("/changepassword", checkTokenValidation, async (req, res, next) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await userService.checkCandidate(req.user.email);
+    const validate = userService.compareCryptPassword(oldPassword, user.password);
+    if (!validate) {
+      return next(ApiError.badRequest("Неверный пароль"));
+    }
+    const hashedNewPassword = await userService.cryptPassword(newPassword);
+    user.password = hashedNewPassword;
+    await user.save();
+    const jwt = userService.generateToken(user.id, user.username, user.email, user.role, user.imgAvatar);
+    res.json({ token: jwt });
+  }
+  catch (e) {
+    return next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
+
+
+router.get("/getuser/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return next(ApiError.badRequest("Ошибка запроса"))
+    }
+    const user = await userService.getUser(id);
+    if (!user) {
+      return next(ApiError.badRequest("Пользователь не найден"))
+    }
+    return res.json(user);
+  }
+  catch (e) {
+    return next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
 
 router.post("/login", async (req, res, next) => {
   try {
@@ -56,7 +88,6 @@ router.post("/login", async (req, res, next) => {
       return next(ApiError.badRequest("Некорректный email или пароль"));
     }
     const user = await userService.checkCandidate(email);
-    console.log()
     if (!user) {
       return next(ApiError.badRequest("Пользователя с таким email не существует"));
     }

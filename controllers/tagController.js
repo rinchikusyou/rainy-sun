@@ -21,7 +21,8 @@ router.post("/", checkRole("ADMIN"), async (req, res, next) => {
 
 router.get("/", async (req, res, next) => {
   try {
-    const tags = await tagService.getAll();
+    const { title, limit } = req.query;
+    const tags = await tagService.getAll(title, limit);
     res.json(tags);
   }
   catch (err) {

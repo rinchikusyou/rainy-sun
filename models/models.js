@@ -18,7 +18,7 @@ const Favorite = sequelize.define("favorite", {
 const Article = sequelize.define("article", {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   title: { type: DataTypes.STRING, allowNull: false },
-  description: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
   views: { type: DataTypes.INTEGER, defaultValue: 0 },
   likes: { type: DataTypes.INTEGER, defaultValue: 0 },
   dislikes: { type: DataTypes.INTEGER, defaultValue: 0 },
@@ -41,7 +41,7 @@ const Tag = sequelize.define("tag", {
 
 const Comment = sequelize.define("comment", {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  description: { type: DataTypes.STRING, allowNull: false },
+  description: { type: DataTypes.TEXT, allowNull: false },
   views: { type: DataTypes.INTEGER, defaultValue: 0 },
   likes: { type: DataTypes.INTEGER, defaultValue: 0 },
   dislikes: { type: DataTypes.INTEGER, defaultValue: 0 },

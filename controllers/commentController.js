@@ -52,6 +52,7 @@ router.delete("/:id", checkTokenValidation, async (req, res, next) => {
     res.json(comment);
   }
   catch (err) {
+    console.log(err)
     next(ApiError.badRequest("Ошибка запроса"))
   }
 })

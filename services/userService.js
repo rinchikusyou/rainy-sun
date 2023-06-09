@@ -4,7 +4,6 @@ const { User } = require("../models/models");
 require('dotenv').config();
 const path = require('path')
 const uuid = require('uuid')
-const fs = require('fs')
 const asyncDeleteFile = require("../files/removeAsync");
 
 
@@ -12,6 +11,15 @@ class UserService {
   async checkCandidate(email) {
     const candidate = await User.findOne({ where: { email } });
     return candidate;
+  }
+
+  async getUser(id) {
+    const user = await User.findOne({
+      where: { id },
+      attributes:
+        { exclude: ["password", "createdAt", "updatedAt", "role"] }
+    });
+    return user;
   }
 
   compareCryptPassword(password, hashedPassword) {
@@ -41,7 +49,7 @@ class UserService {
     return token
   }
 
-  async updateUser(username, email, password, delete_img, files) {
+  async updateUser(username, email, delete_img, files) {
     let fileName = null;
     const user = await User.findOne({ where: { email } });
 
@@ -60,12 +68,6 @@ class UserService {
     };
 
     user.username = username || user.username;
-    let hashedPassword;
-    if (password) {
-      hashedPassword = await this.cryptPassword(password)
-    }
-    user.password = password ? hashedPassword : user.password;
-
 
     if (fileName) {
       if (user.imgAvatar) {
@@ -77,6 +79,7 @@ class UserService {
     await user.save();
     return user;
   }
+
 
 
 }

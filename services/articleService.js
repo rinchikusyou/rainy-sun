@@ -1,4 +1,4 @@
-const { Article, UserArticleLikes, Comment, ArticleImg, User, Favorite, UserCommentLikes } = require("../models/models")
+const { Article, UserArticleLikes, ArticleImg, User, Favorite, Comment, Tag, UserCommentLikes } = require("../models/models")
 const fs = require('fs')
 const { Op, or } = require("sequelize");
 const path = require('path')
@@ -26,45 +26,61 @@ class ArticleService {
     if (popular && now) {
       result = await Article.findAndCountAll(
         {
+          attributes: {
+            exclude: ["description"]
+          },
           where: {
             title: {
               [Op.like]: `%${title}%`
             }
           }, include: [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
           ], limit, offset, order: [['views', 'DESC'], ['createdAt', 'DESC']]
         })
     }
     else if (popular && !now) {
       result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
           }
         }, include: [{ model: ArticleImg, as: "article_imgs" },
+        { model: Tag, as: "tag" },
         { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
         ], limit, offset, order: [['views', 'DESC']]
       })
     }
     else if (!popular && now) {
       result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
           }
         }, include:
           [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
           ], limit, offset, order: [['createdAt', 'DESC']]
       })
     }
     else {
       result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
         where: {
           title: {
             [Op.like]: `%${title}%`
           }
         }, include: [{ model: ArticleImg, as: "article_imgs" },
+        { model: Tag, as: "tag" },
         { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
         ], limit, offset
       })
@@ -77,14 +93,92 @@ class ArticleService {
 
 
 
+  async getAllByUserId(title, limit, page, popular, now, userId) {
+    let result;
+    let offset = limit * page - limit;
+    if (popular && now) {
+      result = await Article.findAndCountAll(
+        {
+          attributes: {
+            exclude: ["description"]
+          },
+          where: {
+            title: {
+              [Op.like]: `%${title}%`
+            },
+            userId
+          }, include: [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
+          { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
+          ], limit, offset, order: [['views', 'DESC'], ['createdAt', 'DESC']]
+        })
+    }
+    else if (popular && !now) {
+      result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
+        where: {
+          title: {
+            [Op.like]: `%${title}%`
+          },
+          userId
+        }, include: [{ model: ArticleImg, as: "article_imgs" },
+        { model: Tag, as: "tag" },
+        { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
+        ], limit, offset, order: [['views', 'DESC']]
+      })
+    }
+    else if (!popular && now) {
+      result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
+        where: {
+          title: {
+            [Op.like]: `%${title}%`
+          },
+          userId
+        }, include:
+          [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
+          { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
+          ], limit, offset, order: [['createdAt', 'DESC']]
+      })
+    }
+    else {
+      result = await Article.findAndCountAll({
+        attributes: {
+          exclude: ["description"]
+        },
+        where: {
+          title: {
+            [Op.like]: `%${title}%`
+          },
+          userId
+        }, include: [{ model: ArticleImg, as: "article_imgs" },
+        { model: Tag, as: "tag" },
+        { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
+        ], limit, offset
+      })
+    }
+
+    return result;
+  }
+
+
+
+
   async getOne(id, user) {
     let article;
     if (user) {
       article = await Article.findOne(
         {
           where: { id }, include: [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
-          { model: UserArticleLikes, as: "user_article_likes", where: { articleId: id, userId: user.id }, required: false }
+          { model: UserArticleLikes, as: "user_article_likes", where: { articleId: id, userId: user.id }, required: false },
+          { model: Favorite, as: "article_favorite", where: { articleId: id, userId: user.id }, required: false }
           ],
         })
 
@@ -93,6 +187,7 @@ class ArticleService {
       article = await Article.findOne(
         {
           where: { id }, include: [{ model: ArticleImg, as: "article_imgs" },
+          { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
           ]
         })
@@ -118,6 +213,19 @@ class ArticleService {
       await asyncDeleteFile(articleImg.imgName);
       await articleImg.destroy();
     }
+    const articleId = article.id;
+    const comments = await Comment.findAll({ where: { articleId } });
+    const article_likes = await UserArticleLikes.findAll({ where: { articleId } });
+    article_likes.forEach(article_like => {
+      article_like.destroy();
+    })
+    comments.forEach(async (comment) => {
+      const comment_likes = await UserCommentLikes.findAll({ where: { commentId: comment.id } })
+      comment_likes.forEach(comment_like => {
+        comment_like.destroy();
+      })
+      comment.destroy();
+    })
     return article;
   }
 
@@ -164,7 +272,6 @@ class ArticleService {
       else {
         await ArticleImg.create({ articleId: article.id, imgName: fileName });
       }
-
       preview.mv(path.resolve(__dirname, "..", "static", fileName));
     }
 
@@ -209,17 +316,24 @@ class ArticleService {
   }
 
 
-  async getFavorites(user) {
+  async getFavorites(user, limit, offset, title) {
     const articles = await Favorite.findAndCountAll({
       where: {
         userId: user.id
       },
       include: [{
-        model: Article, as: "article", include: [
+        model: Article, where: {
+          title: {
+            [Op.like]: `%${title}%`
+          }
+        }, as: "article", include: [
+          { model: Tag, as: "tag" },
           { model: ArticleImg, as: "article_imgs" },
-          { model: User, as: "user" }
-        ]
+          { model: User, as: "user", attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
+        ],
+        attributes: { exclude: ["description"] }
       }]
+      , limit, offset
     })
 
     return articles;
@@ -231,6 +345,7 @@ class ArticleService {
       return null;
     }
     const newFavorite = await Favorite.create({ articleId, userId: user.id });
+    console.log(newFavorite)
     return newFavorite;
   }
 

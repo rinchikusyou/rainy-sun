@@ -15,7 +15,7 @@ class CommentService {
         include: [{ model: User, as: "user", attributes: { exclude: ["password", "role", "createdAt", "updatedAt"] } }, {
           model: UserCommentLikes, as: "user_comment_likes",
           where: { userId: user.id }, required: false
-        }], limit, offset
+        }], limit, offset, order: [["createdAt", "DESC"]]
       })
     }
     else {
@@ -30,6 +30,14 @@ class CommentService {
     if (!commentCheck || commentCheck.userId !== user.id) {
       return null;
     }
+    const commentLikesDislikes = await UserCommentLikes.findAll({
+      where: {
+        commentId: commentId,
+      }
+    })
+    commentLikesDislikes.forEach(async (item) => {
+      { await item.destroy(); }
+    })
     await commentCheck.destroy();
     return { message: "deleted" };
   }

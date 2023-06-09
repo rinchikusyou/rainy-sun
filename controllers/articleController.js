@@ -28,6 +28,7 @@ router.post("/add", checkTokenValidation, async (req, res, next) => {
     return res.json(article);
   }
   catch (err) {
+    console.log(err)
     next(ApiError.badRequest("Ошибка запроса"))
   }
 })
@@ -46,13 +47,35 @@ router.get("/", async (req, res, next) => {
   }
 })
 
+
+
+router.get("/user/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return next(ApiError.badRequest("Ошибка запроса"));
+    }
+    let { title, limit, page, popular, now } = req.query;
+    title = title || "";
+    limit = limit || 8;
+    page = page || 1;
+    const result = await articleService.getAllByUserId(title, limit, page, popular, now, id)
+    return res.json(result)
+  }
+  catch (err) {
+    next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
+
+
+
 router.get("/:id", checkUserIsAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
     console.log(req.user)
     const article = await articleService.getOne(id, req.user);
     if (!article) {
-      return next(ApiError.badRequest("Записи по данному идентификатору не существует"))
+      return next(ApiError.badRequest("Статьи по данному идентификатору не существует"))
     }
     res.json(article);
   }
@@ -97,6 +120,7 @@ router.delete("/:id", checkTokenValidation, async (req, res, next) => {
 
   }
   catch (error) {
+    console.log(error)
     next(ApiError.badRequest("Ошибка запроса"))
   }
 })
@@ -155,7 +179,11 @@ router.get("/likes/remove/:id", checkTokenValidation, async (req, res, next) => 
 
 router.get("/favorite/get", checkTokenValidation, async (req, res, next) => {
   try {
-    const articles = await articleService.getFavorites(req.user);
+    let { page, limit, title } = req.query;
+    limit = limit || 8;
+    page = page || 1;
+    let offset = page * limit - limit;
+    const articles = await articleService.getFavorites(req.user, limit, offset, title);
     res.json(articles)
   }
   catch (err) {
@@ -198,6 +226,8 @@ router.delete("/favorite/delete", checkTokenValidation, async (req, res, next) =
     next(ApiError.badRequest("Ошибка запроса"))
   }
 })
+
+
 
 
 
