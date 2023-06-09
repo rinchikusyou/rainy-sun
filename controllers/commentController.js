@@ -76,7 +76,6 @@ router.post("/likes/:id", checkTokenValidation, async (req, res, next) => {
     return res.json({ message: "set rate" })
   }
   catch (err) {
-    console.log(err)
     next(ApiError.badRequest("Ошибка запроса"))
   }
 })
@@ -88,7 +87,7 @@ router.get("/likes/remove/:id", checkTokenValidation, async (req, res, next) => 
     return res.json({ message: "removed" })
   }
   catch (err) {
-    next(ApiError.badRequest("Ошибка запроса"))
+    return res.json({ message: "Ошибка запроса" });
   }
 })
 
