@@ -210,7 +210,7 @@ class ArticleService {
       where: { articleId: article.id }
     })
     if (articleImg) {
-      asyncDeleteFile(articleImg.imgName);
+      await asyncDeleteFile(articleImg.imgName);
       await articleImg.destroy();
     }
     const articleId = article.id;
@@ -250,7 +250,7 @@ class ArticleService {
       if (!articleImg) {
         return null;
       }
-      asyncDeleteFile(articleImg.imgName);
+      await asyncDeleteFile(articleImg.imgName);
       articleImg.destroy();
     }
     else if (files) {
@@ -264,7 +264,7 @@ class ArticleService {
 
       if (articleImg) {
 
-        asyncDeleteFile(articleImg.imgName);
+        await asyncDeleteFile(articleImg.imgName);
         articleImg.imgName = fileName;
         await articleImg.save();
       }
