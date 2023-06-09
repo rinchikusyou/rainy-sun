@@ -57,7 +57,7 @@ class UserService {
       if (!user.imgAvatar) {
         return null;
       }
-      await asyncDeleteFile(user.imgAvatar);
+      asyncDeleteFile(user.imgAvatar);
       user.imgAvatar = null;
     }
 
@@ -71,7 +71,7 @@ class UserService {
 
     if (fileName) {
       if (user.imgAvatar) {
-        await asyncDeleteFile(user.imgAvatar);
+        asyncDeleteFile(user.imgAvatar);
       }
       user.imgAvatar = fileName;
     }
