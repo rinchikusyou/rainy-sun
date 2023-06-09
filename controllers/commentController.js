@@ -71,7 +71,7 @@ router.post("/likes/:id", checkTokenValidation, async (req, res, next) => {
 
     const result = await commentService.likeDislike(id, isLike, req.user);
     if (!result) {
-      return next(ApiError.badRequest("Ошибка запроса"))
+      return res.json({ message: "rated" })
     }
     return res.json({ message: "set rate" })
   }
