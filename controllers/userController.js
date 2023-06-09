@@ -25,6 +25,7 @@ router.post("/registration", async (req, res, next) => {
     res.json({ token: jwt });
   }
   catch (err) {
+    console.log(err)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
@@ -99,6 +100,7 @@ router.post("/login", async (req, res, next) => {
     res.json({ token: jwt })
   }
   catch (err) {
+    console.log(err)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
