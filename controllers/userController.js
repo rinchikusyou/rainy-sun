@@ -40,6 +40,7 @@ router.put("/", checkTokenValidation, async (req, res, next) => {
     res.json({ token: jwt })
   }
   catch (e) {
+    console.log(e)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
