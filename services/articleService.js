@@ -19,8 +19,23 @@ class ArticleService {
     return article;
   }
 
+  async postArticle(articleId) {
+    const article = await Article.findOne({
+      where: {
+        id: articleId,
+        confirmed: false,
+      }
+    })
+    if (!article) {
+      return null;
+    }
+    article.confirmed = true;
+    await article.save();
+    return article;
+  }
 
-  async getAll(title, limit, page, popular, now) {
+
+  async getAll(title, limit, page, popular, now, confirmed) {
     let result;
     let offset = limit * page - limit;
     if (popular && now) {
@@ -32,7 +47,8 @@ class ArticleService {
           where: {
             title: {
               [Op.like]: `%${title}%`
-            }
+            },
+            confirmed: confirmed,
           }, include: [{ model: ArticleImg, as: "article_imgs" },
           { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
@@ -47,7 +63,8 @@ class ArticleService {
         where: {
           title: {
             [Op.like]: `%${title}%`
-          }
+          },
+          confirmed: confirmed,
         }, include: [{ model: ArticleImg, as: "article_imgs" },
         { model: Tag, as: "tag" },
         { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
@@ -62,7 +79,8 @@ class ArticleService {
         where: {
           title: {
             [Op.like]: `%${title}%`
-          }
+          },
+          confirmed: confirmed,
         }, include:
           [{ model: ArticleImg, as: "article_imgs" },
           { model: Tag, as: "tag" },
@@ -78,7 +96,8 @@ class ArticleService {
         where: {
           title: {
             [Op.like]: `%${title}%`
-          }
+          },
+          confirmed: confirmed,
         }, include: [{ model: ArticleImg, as: "article_imgs" },
         { model: Tag, as: "tag" },
         { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } }
@@ -106,6 +125,7 @@ class ArticleService {
             title: {
               [Op.like]: `%${title}%`
             },
+            confirmed: true,
             userId
           }, include: [{ model: ArticleImg, as: "article_imgs" },
           { model: Tag, as: "tag" },
@@ -122,6 +142,7 @@ class ArticleService {
           title: {
             [Op.like]: `%${title}%`
           },
+          confirmed: true,
           userId
         }, include: [{ model: ArticleImg, as: "article_imgs" },
         { model: Tag, as: "tag" },
@@ -138,6 +159,7 @@ class ArticleService {
           title: {
             [Op.like]: `%${title}%`
           },
+          confirmed: true,
           userId
         }, include:
           [{ model: ArticleImg, as: "article_imgs" },
@@ -155,6 +177,7 @@ class ArticleService {
           title: {
             [Op.like]: `%${title}%`
           },
+          confirmed: true,
           userId
         }, include: [{ model: ArticleImg, as: "article_imgs" },
         { model: Tag, as: "tag" },
@@ -169,12 +192,12 @@ class ArticleService {
 
 
 
-  async getOne(id, user) {
+  async getOne(id, user, confirmed) {
     let article;
     if (user) {
       article = await Article.findOne(
         {
-          where: { id }, include: [{ model: ArticleImg, as: "article_imgs" },
+          where: { id, confirmed: confirmed }, include: [{ model: ArticleImg, as: "article_imgs" },
           { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
           { model: UserArticleLikes, as: "user_article_likes", where: { articleId: id, userId: user.id }, required: false },
@@ -186,7 +209,7 @@ class ArticleService {
     else {
       article = await Article.findOne(
         {
-          where: { id }, include: [{ model: ArticleImg, as: "article_imgs" },
+          where: { id, confirmed: confirmed }, include: [{ model: ArticleImg, as: "article_imgs" },
           { model: Tag, as: "tag" },
           { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt", "role"] } },
           ]
@@ -197,13 +220,13 @@ class ArticleService {
 
 
 
-  async deleteOne(id, userId) {
+  async deleteOne(id, user, confirmed) {
     const article = await Article.findOne(
       {
-        where: { id }
+        where: { id, confirmed }
       },
       { model: User, as: 'user', attributes: { exclude: ["password", "createdAt", "updatedAt"] } })
-    if (article.userId !== userId) {
+    if (article.userId !== user.id && user.role !== "ADMIN") {
       return null;
     }
     const articleImg = await ArticleImg.findOne({
@@ -231,14 +254,11 @@ class ArticleService {
 
 
 
-  async update(id, userId, title, description, tag_id, delete_img, files) {
+  async update(id, title, description, tag_id, delete_img, files) {
     const article = await Article.findOne(
       {
-        where: { id }
+        where: { id, confirmed: true }
       })
-    if (article.userId !== userId) {
-      return null;
-    }
     article.title = title || article.title;
     article.description = description || article.description;
     article.tagId = tag_id || article.tagId;
@@ -282,7 +302,7 @@ class ArticleService {
   async setViews(id) {
     const article = await Article.findOne(
       {
-        where: { id }
+        where: { id, confirmed: true }
       });
     article.views += 1;
     await article.save();
@@ -296,7 +316,7 @@ class ArticleService {
     }
     const article = await Article.findOne(
       {
-        where: { id }
+        where: { id, confirmed: true }
       });
     await UserArticleLikes.create({ articleId: id, userId: user.id, isLike: type });
     type ? article.likes += 1 : article.dislikes += 1;
@@ -307,7 +327,7 @@ class ArticleService {
   async removeRate(id, user) {
     const article = await Article.findOne(
       {
-        where: { id }
+        where: { id, confirmed: true }
       });
     const userRate = await UserArticleLikes.findOne({ where: { articleId: id, userId: user.id } })
     userRate.isLike ? article.likes -= 1 : article.dislikes -= 1;

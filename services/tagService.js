@@ -21,6 +21,7 @@ class TagService {
     return tags
   }
 
+
   async getOne(id, limit, offset, title, popular, now) {
     const tag = await Tag.findOne({ where: { id } })
 

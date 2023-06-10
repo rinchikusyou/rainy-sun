@@ -10,9 +10,14 @@ const checkUserIsAuth = require("../middlewares/checkUserIsAuthMiddleware")
 
 router.post("/", checkRole("ADMIN"), async (req, res, next) => {
   try {
-    const { title, description, tag_id, user_id } = req.body;
-    const filename = uuid.v4() + ".jpg";
-    const article = await articleService.create(title, description, tag_id, user_id, req.files, filename)
+    const { articleId } = req.body;
+    if (!articleId) {
+      return next(ApiError.badRequest("Ошибка запроса"));
+    }
+    const article = await articleService.postArticle(articleId)
+    if (!article) {
+      return next(ApiError.badRequest("Статья не найдена"));
+    }
     return res.json(article);
   }
   catch (err) {
@@ -39,7 +44,21 @@ router.get("/", async (req, res, next) => {
     title = title || "";
     limit = limit || 8;
     page = page || 1;
-    const result = await articleService.getAll(title, limit, page, popular, now)
+    const result = await articleService.getAll(title, limit, page, popular, now, true)
+    return res.json(result)
+  }
+  catch (err) {
+    next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
+
+router.get("/notconfirmed", checkRole("ADMIN"), async (req, res, next) => {
+  try {
+    let { title, limit, page, popular, now } = req.query;
+    title = title || "";
+    limit = limit || 8;
+    page = page || 1;
+    const result = await articleService.getAll(title, limit, page, popular, now, false)
     return res.json(result)
   }
   catch (err) {
@@ -72,8 +91,22 @@ router.get("/user/:id", async (req, res, next) => {
 router.get("/:id", checkUserIsAuth, async (req, res, next) => {
   try {
     const { id } = req.params;
-    console.log(req.user)
-    const article = await articleService.getOne(id, req.user);
+    const article = await articleService.getOne(id, req.user, true);
+    if (!article) {
+      return next(ApiError.badRequest("Статьи по данному идентификатору не существует"))
+    }
+    res.json(article);
+  }
+  catch (error) {
+    console.log(error)
+    next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
+
+router.get("/notconfirmed/:id", checkRole("ADMIN"), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const article = await articleService.getOne(id, req.user, false);
     if (!article) {
       return next(ApiError.badRequest("Статьи по данному идентификатору не существует"))
     }
@@ -87,14 +120,14 @@ router.get("/:id", checkUserIsAuth, async (req, res, next) => {
 
 
 
-router.put("/:id", checkTokenValidation, async (req, res, next) => {
+router.put("/:id", checkRole("ADMIN"), async (req, res, next) => {
   try {
     const { id } = req.params;
     if (!id) {
       return next(ApiError.badRequest("Ошибка запроса"));
     }
     const { title, description, tag_id, delete_img } = req.body;
-    const article = await articleService.update(id, req.user.id, title, description, tag_id, delete_img, req.files);
+    const article = await articleService.update(id, title, description, tag_id, delete_img, req.files);
     if (!article) {
       return next(ApiError.badRequest("Ошибка доступа"));
     }
@@ -107,11 +140,30 @@ router.put("/:id", checkTokenValidation, async (req, res, next) => {
   }
 })
 
+router.delete("/notconfirmed/:id", checkRole("ADMIN"), async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      return next(ApiError.badRequest("ID не был указан"));
+    }
+    const article = await articleService.deleteOne(id, req.user, false);
+    if (!article) {
+      return next(ApiError.badRequest("Ошибка доступа"));
+    }
+    await article.destroy();
+    res.json({ message: "deleted" });
+
+  }
+  catch (error) {
+    console.log(error)
+    next(ApiError.badRequest("Ошибка запроса"))
+  }
+})
 
 router.delete("/:id", checkTokenValidation, async (req, res, next) => {
   try {
     const { id } = req.params;
-    const article = await articleService.deleteOne(id, req.user.id);
+    const article = await articleService.deleteOne(id, req.user, true);
     if (!article) {
       return next(ApiError.badRequest("Ошибка доступа"));
     }

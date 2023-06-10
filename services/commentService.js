@@ -27,7 +27,7 @@ class CommentService {
 
   async deleteComment(commentId, user) {
     const commentCheck = await Comment.findOne({ where: { id: commentId } });
-    if (!commentCheck || commentCheck.userId !== user.id) {
+    if (!commentCheck || (commentCheck.userId !== user.id && user.role !== "ADMIN")) {
       return null;
     }
     const commentLikesDislikes = await UserCommentLikes.findAll({

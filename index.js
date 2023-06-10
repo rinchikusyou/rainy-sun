@@ -22,11 +22,12 @@ app.use(cors());
 app.use(express.json());
 app.use(fileUpload({}));
 app.use(express.static(staticPath))
-app.use(checkRefererMiddleware)
+// app.use(checkRefererMiddleware)
 app.use("/api", router);
 app.use(ErrorHandlerMiddleware);
 
 const start = async () => {
+  await models.Article.sync({ alter: true });
   await sequelize.authenticate();
   await sequelize.sync();
   app.listen(PORT, () => {

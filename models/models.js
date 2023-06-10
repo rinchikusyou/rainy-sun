@@ -22,6 +22,7 @@ const Article = sequelize.define("article", {
   views: { type: DataTypes.INTEGER, defaultValue: 0 },
   likes: { type: DataTypes.INTEGER, defaultValue: 0 },
   dislikes: { type: DataTypes.INTEGER, defaultValue: 0 },
+  confirmed: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
 })
 
 const ArticleImg = sequelize.define("article_img", {
