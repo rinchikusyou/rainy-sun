@@ -22,7 +22,7 @@ app.use(cors());
 app.use(express.json());
 app.use(fileUpload({}));
 app.use(express.static(staticPath))
-// app.use(checkRefererMiddleware)
+app.use(checkRefererMiddleware)
 app.use("/api", router);
 app.use(ErrorHandlerMiddleware);
 
