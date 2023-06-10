@@ -27,7 +27,6 @@ app.use("/api", router);
 app.use(ErrorHandlerMiddleware);
 
 const start = async () => {
-  await models.Article.sync({ alter: true });
   await sequelize.authenticate();
   await sequelize.sync();
   app.listen(PORT, () => {
