@@ -2,10 +2,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const { User } = require("../models/models");
 require('dotenv').config();
-const path = require('path')
 const uuid = require('uuid')
-const asyncDeleteFile = require("../files/removeAsync");
-
+const imageService = require("./imageService")
 
 class UserService {
   async checkCandidate(email) {
@@ -32,7 +30,7 @@ class UserService {
     if (files) {
       fileName = uuid.v4() + ".jpg"
       const { imgAvatar } = files;
-      imgAvatar.mv(path.resolve(__dirname, "..", "static", fileName))
+      await imageService.uploadToFirebase(fileName, imgAvatar.data)
     }
 
     const user = await User.create({ username, email, password: hashPassword, role, imgAvatar: fileName });
@@ -57,21 +55,21 @@ class UserService {
       if (!user.imgAvatar) {
         return null;
       }
-      await asyncDeleteFile(user.imgAvatar);
+      await imageService.deleteFromFirebase(user.imgAvatar);
       user.imgAvatar = null;
     }
 
     else if (files) {
       fileName = uuid.v4() + ".jpg"
       const { imgAvatar } = files;
-      imgAvatar.mv(path.resolve(__dirname, "..", "static", fileName))
+      await imageService.uploadToFirebase(fileName, imgAvatar.data)
     };
 
     user.username = username || user.username;
 
     if (fileName) {
       if (user.imgAvatar) {
-        await asyncDeleteFile(user.imgAvatar);
+        await imageService.deleteFromFirebase(user.imgAvatar);
       }
       user.imgAvatar = fileName;
     }

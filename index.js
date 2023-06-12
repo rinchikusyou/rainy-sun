@@ -7,22 +7,14 @@ const fileUpload = require("express-fileupload")
 const ErrorHandlerMiddleware = require("./middlewares/ErrorHandlerMiddleware")
 const checkRefererMiddleware = require("./middlewares/checkReferer");
 const cors = require("cors")
-const path = require("path")
-const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const staticPath = path.resolve(__dirname, "static");
-
-if (!fs.existsSync(staticPath)) {
-  fs.mkdirSync(staticPath);
-}
 
 app.use(cors());
 app.use(express.json());
 app.use(fileUpload({}));
-app.use(express.static(staticPath))
-app.use(checkRefererMiddleware)
+// app.use(checkRefererMiddleware)
 app.use("/api", router);
 app.use(ErrorHandlerMiddleware);
 

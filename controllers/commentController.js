@@ -65,7 +65,6 @@ router.post("/likes/:id", checkTokenValidation, async (req, res, next) => {
     const { isLike } = req.body;
 
     if (isLike === undefined) {
-      console.log("lol")
       return next(ApiError.badRequest("Ошибка запроса"))
     }
 

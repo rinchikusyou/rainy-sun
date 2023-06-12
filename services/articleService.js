@@ -1,10 +1,7 @@
 const { Article, UserArticleLikes, ArticleImg, User, Favorite, Comment, Tag, UserCommentLikes } = require("../models/models")
-const fs = require('fs')
-const { Op, or } = require("sequelize");
-const path = require('path')
+const { Op } = require("sequelize");
 const uuid = require("uuid")
-const asyncDeleteFile = require("../files/removeAsync")
-
+const imageService = require("./imageService")
 
 class ArticleService {
 
@@ -14,7 +11,7 @@ class ArticleService {
     if (files) {
       const { preview } = files;
       await ArticleImg.create({ articleId: article.id, imgName: fileName });
-      preview.mv(path.resolve(__dirname, "..", "static", fileName));
+      await imageService.uploadToFirebase(fileName, preview.data);
     }
     return article;
   }
@@ -233,7 +230,7 @@ class ArticleService {
       where: { articleId: article.id }
     })
     if (articleImg) {
-      await asyncDeleteFile(articleImg.imgName);
+      await imageService.deleteFromFirebase(articleImg.imgName);
       await articleImg.destroy();
     }
     const articleId = article.id;
@@ -270,7 +267,7 @@ class ArticleService {
       if (!articleImg) {
         return null;
       }
-      await asyncDeleteFile(articleImg.imgName);
+      await imageService.deleteFromFirebase(articleImg.imgName);
       articleImg.destroy();
     }
     else if (files) {
@@ -284,7 +281,7 @@ class ArticleService {
 
       if (articleImg) {
 
-        await asyncDeleteFile(articleImg.imgName);
+        await imageService.deleteFromFirebase(articleImg.imgName);
         articleImg.imgName = fileName;
         await articleImg.save();
       }
@@ -292,7 +289,8 @@ class ArticleService {
       else {
         await ArticleImg.create({ articleId: article.id, imgName: fileName });
       }
-      preview.mv(path.resolve(__dirname, "..", "static", fileName));
+      // preview.mv(path.resolve(__dirname, "..", "static", fileName));
+      await imageService.uploadToFirebase(fileName, preview.data)
     }
 
     await article.save();

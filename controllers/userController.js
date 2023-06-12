@@ -25,6 +25,7 @@ router.post("/registration", async (req, res, next) => {
     res.json({ token: jwt });
   }
   catch (err) {
+    console.log(err)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
@@ -40,6 +41,7 @@ router.put("/", checkTokenValidation, async (req, res, next) => {
     res.json({ token: jwt })
   }
   catch (e) {
+    console.log(e)
     return next(ApiError.badRequest("Ошибка запроса"))
   }
 })
